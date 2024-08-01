@@ -6,14 +6,14 @@ import (
 )
 
 type Response struct {
-	StatusCode		int		`json:"statusCode"`
+	Success			bool	`json:"success"`
 	ErrorMessage	string	`json:"errorMessage"`
 	Data			any		`json:"data"`
 }
 
-func WriteJSON(w http.ResponseWriter, statusCode int, errorMessage string, data any) error {
+func WriteJSON(w http.ResponseWriter, statusCode int, success bool, errorMessage string, data any) error {
 	resp := Response{
-		StatusCode: statusCode,
+		Success: success,
 		ErrorMessage: errorMessage,
 		Data: data,
 	}

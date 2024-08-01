@@ -11,5 +11,5 @@ type PingResponse struct {
 }
 
 func (s *Server) Ping(w http.ResponseWriter, r *http.Request) {
-	utils.WriteJSON(w, 200, "", PingResponse{Pong: "pong"})
+	utils.WriteJSON(w, http.StatusOK, true, "", PingResponse{Pong: "pong"})
 }
