@@ -14,7 +14,7 @@ func main() {
 		log.Fatal("Error getting config from evironment: ", err)
 	}
 
-	redisStorage, err := storage.NewRedisStorage(config.DbAddr, config.DbPass, config.Db)
+	redisStorage, err := storage.NewRedisStorage(config.Db.DbAddr, config.Db.DbPass, config.Db.Db)
 	if err != nil {
 		log.Fatal("Error connecting db: ", err)
 	}
