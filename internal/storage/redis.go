@@ -19,7 +19,7 @@ func NewRedisStorage(addr string, password string, db int) (*RedisStorage, error
 		DB: db,
 	})
 
-	ctx := context.TODO()
+	ctx := context.TODO() //FIXME: context must be outside of func
 	if err := newRdb.Ping(ctx).Err() ; err != nil {
 		return nil, err
 	}
@@ -29,13 +29,13 @@ func NewRedisStorage(addr string, password string, db int) (*RedisStorage, error
 	}, nil
 }
 
-func (s *RedisStorage) GetNewUserId(ctx context.Context) (int, error) {
+func (s *RedisStorage) GetNewUserId(ctx context.Context) (string, error) {
 	id, err := s.rdb.Incr(ctx, "user_id_seq").Result()
 	if err != nil {
-		return -1, err
+		return "", err
 	}
 
-	return int(id), nil
+	return string(id), nil
 }
 
 func (s *RedisStorage) CreateUser(ctx context.Context, user *models.User) (*models.User, error) {
@@ -46,7 +46,7 @@ func (s *RedisStorage) CreateUser(ctx context.Context, user *models.User) (*mode
 
 	user.Id = id
 
-	redisUserId := fmt.Sprintf("user:%d", id)
+	redisUserId := fmt.Sprintf("user:%s", id)
 
 	err = s.rdb.JSONSet(ctx, redisUserId, ".", user).Err()
 	if err != nil {

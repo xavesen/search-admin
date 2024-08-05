@@ -6,9 +6,10 @@ import (
 
 type Config struct {
 	DbAddr		string	`mapstructure:"DB_ADDR"`
-	DbPass		string	`mapstructure:"DB_PASSWORD"`
-	Db			int		`mapstructure:"DB"`
 	ListenAddr	string	`mapstructure:"LISTEN_ADDR"`
+	Db			string	`mapstructure:"DB"`
+	DbUser		string	`mapstructure:"DB_USER"`
+	DbPass		string	`mapstructure:"DB_PASSWORD"`
 }
 
 func LoadConfig() (*Config, error) {

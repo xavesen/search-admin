@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 
 	"github.com/xavesen/search-admin/internal/api"
@@ -14,12 +15,13 @@ func main() {
 		log.Fatal("Error getting config from evironment: ", err)
 	}
 
-	redisStorage, err := storage.NewRedisStorage(config.DbAddr, config.DbPass, config.Db)
+	ctx := context.TODO()
+	mongoStorage, err := storage.NewMongoStorage(ctx, config.DbAddr, config.Db, config.DbUser, config.DbPass)
 	if err != nil {
 		log.Fatal("Error connecting db: ", err)
 	}
 
-	server := api.NewServer(config.ListenAddr, redisStorage, config)
+	server := api.NewServer(config.ListenAddr, mongoStorage, config)
 
 	log.Fatal(server.Start())
 }
