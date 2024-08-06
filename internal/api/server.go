@@ -29,6 +29,7 @@ func NewServer(listenAddr string, storage storage.Storage, config *config.Config
 func (s *Server) initialiseRoutes() {
 	s.router.HandleFunc("/ping", s.Ping).Methods("GET")
 	s.router.HandleFunc("/user", s.CreateUser).Methods("POST")
+	s.router.HandleFunc("/users", s.GetAllUsers).Methods("GET")
 }
  
 func (s *Server) Start() error {

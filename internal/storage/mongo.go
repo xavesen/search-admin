@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/xavesen/search-admin/internal/models"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -71,4 +72,20 @@ func (s *MongoStorage) CreateUser(ctx context.Context, user *models.User) (*mode
 	user.Id = id
 
 	return user, nil
+}
+
+func (s *MongoStorage) GetAllUsers(ctx context.Context) ([]models.User, error) {
+	var users []models.User
+
+	filter := bson.D{{}}
+	cur, err := s.usersCollecton.Find(ctx, filter)
+	if err != nil {
+		return users, err
+	}
+
+	if err = cur.All(ctx, &users); err != nil {
+		return users, err
+	}
+
+	return users, nil
 }

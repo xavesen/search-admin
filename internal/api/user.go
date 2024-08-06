@@ -9,6 +9,17 @@ import (
 	"github.com/xavesen/search-admin/internal/utils"
 )
 
+func (s *Server) GetAllUsers(w http.ResponseWriter, r *http.Request) {
+	ctx := context.TODO()
+	users, err := s.storage.GetAllUsers(ctx)
+	if err != nil {
+		utils.WriteJSON(w, http.StatusInternalServerError, false, "Internal server error", nil)
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusCreated, true, "", users)
+}
+
 func (s *Server) CreateUser(w http.ResponseWriter, r *http.Request) {
 	var newUser *models.User
 
