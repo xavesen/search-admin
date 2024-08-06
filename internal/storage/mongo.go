@@ -3,7 +3,6 @@ package storage
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/xavesen/search-admin/internal/models"
 	"go.mongodb.org/mongo-driver/bson"
@@ -59,7 +58,6 @@ func getOid(supposedOid interface{}) (string, bool) {
 func (s *MongoStorage) CreateUser(ctx context.Context, user *models.User) (*models.User, error) {
 	result, err := s.usersCollecton.InsertOne(ctx, user)
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 
@@ -70,6 +68,22 @@ func (s *MongoStorage) CreateUser(ctx context.Context, user *models.User) (*mode
 	}
 
 	user.Id = id
+
+	return user, nil
+}
+
+func (s *MongoStorage) GetUser(ctx context.Context, id string) (*models.User, error) {
+	var user *models.User
+
+	oid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+	filter := bson.D{{Key: "_id", Value: oid}}
+
+	if err := s.usersCollecton.FindOne(ctx, filter).Decode(&user); err != nil {
+		return nil, err
+	}
 
 	return user, nil
 }
