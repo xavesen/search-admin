@@ -63,3 +63,25 @@ func (s *Server) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	utils.WriteJSON(w, http.StatusCreated, true, "", newUser)
 }
+
+func (s *Server) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, ok := vars["id"]
+	if !ok {
+		utils.WriteJSON(w, http.StatusBadRequest, false, "No user id provided", nil)
+		return
+	}
+
+	ctx := context.TODO()
+	err := s.storage.DeleteUser(ctx, id)
+	if err != nil {
+		if err == mongo.ErrNoDocuments || err == primitive.ErrInvalidHex {
+			utils.WriteJSON(w, http.StatusNotFound, false, "No user with such id", nil)
+		} else {
+			utils.WriteJSON(w, http.StatusInternalServerError, false, "Internal server error", nil)
+		}
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, true, "", nil)
+}

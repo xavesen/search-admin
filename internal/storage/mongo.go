@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/xavesen/search-admin/internal/models"
 	"go.mongodb.org/mongo-driver/bson"
@@ -102,4 +103,22 @@ func (s *MongoStorage) GetAllUsers(ctx context.Context) ([]models.User, error) {
 	}
 
 	return users, nil
+}
+
+func (s *MongoStorage) DeleteUser(ctx context.Context, id string) error {
+	oid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+
+	filter := bson.D{{Key: "_id", Value: oid}}
+	result, err := s.usersCollecton.DeleteOne(ctx, filter)
+	if err != nil {
+		fmt.Printf("err: %s", err.Error())
+		return err
+	} else if result.DeletedCount < 1 {
+		return mongo.ErrNoDocuments
+	}
+
+	return nil
 }
