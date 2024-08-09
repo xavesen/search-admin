@@ -6,6 +6,7 @@ import (
 	"github.com/xavesen/search-admin/internal/config"
 	"github.com/xavesen/search-admin/internal/storage"
 	"github.com/gorilla/mux"
+	log "github.com/sirupsen/logrus"
 )
 
 type Server struct {
@@ -16,6 +17,7 @@ type Server struct {
 }
 
 func NewServer(listenAddr string, storage storage.Storage, config *config.Config) *Server {
+	log.Debug("Initializing server")
 	server := Server{
 		listenAddr: listenAddr,
 		storage: 	storage,
@@ -27,6 +29,8 @@ func NewServer(listenAddr string, storage storage.Storage, config *config.Config
 }
 
 func (s *Server) initialiseRoutes() {
+	log.Debug("Initializing routes")
+
 	s.router.HandleFunc("/ping", s.Ping).Methods("GET")
 	s.router.HandleFunc("/user", s.CreateUser).Methods("POST")
 	s.router.HandleFunc("/users", s.GetAllUsers).Methods("GET")
@@ -35,6 +39,6 @@ func (s *Server) initialiseRoutes() {
 }
  
 func (s *Server) Start() error {
-	http.HandleFunc("/ping", s.Ping)
+	log.Infof("Starting listening on %s", s.listenAddr)
 	return http.ListenAndServe(s.listenAddr, s.router)
 }
