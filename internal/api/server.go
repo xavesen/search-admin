@@ -3,10 +3,11 @@ package api
 import (
 	"net/http"
 
-	"github.com/xavesen/search-admin/internal/config"
-	"github.com/xavesen/search-admin/internal/storage"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
+	"github.com/xavesen/search-admin/internal/config"
+	"github.com/xavesen/search-admin/internal/middleware"
+	"github.com/xavesen/search-admin/internal/storage"
 )
 
 type Server struct {
@@ -30,6 +31,8 @@ func NewServer(listenAddr string, storage storage.Storage, config *config.Config
 
 func (s *Server) initialiseRoutes() {
 	log.Debug("Initializing routes")
+
+	s.router.Use(middleware.Logging)
 
 	s.router.HandleFunc("/ping", s.Ping).Methods("GET")
 	s.router.HandleFunc("/user", s.CreateUser).Methods("POST")
