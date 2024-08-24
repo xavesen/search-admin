@@ -7,7 +7,7 @@ import (
 )
 
 type PingResponse struct {
-	Pong	string	`json:"ping"`
+	Pong	string	`json:"pong"`
 }
 
 func (s *Server) Ping(w http.ResponseWriter, r *http.Request) {
