@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -24,14 +25,13 @@ func Logging(next http.Handler) http.Handler {
 
 		if log.IsLevelEnabled(log.DebugLevel) {
 			fields["url_values"] = fmt.Sprintf("%v", mux.Vars(r))
-
-			defer r.Body.Close()
 			byteBody, err := io.ReadAll(r.Body)
 			if err != nil {
 				log.Errorf("Error reading request body: %s", err)
 				utils.WriteJSON(w, r, http.StatusBadRequest, false, "Invalid request payload", nil)
 				return
 			}
+			r.Body = io.NopCloser(bytes.NewBuffer(byteBody))
 			fields["body"] = string(byteBody)
 		}
 
