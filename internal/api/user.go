@@ -20,7 +20,7 @@ func (s *Server) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.WriteJSON(w, r, http.StatusCreated, true, "", users)
+	utils.WriteJSON(w, r, http.StatusOK, true, "", users)
 }
 
 func (s *Server) GetUserById(w http.ResponseWriter, r *http.Request) {
@@ -42,7 +42,7 @@ func (s *Server) GetUserById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.WriteJSON(w, r, http.StatusCreated, true, "", user)
+	utils.WriteJSON(w, r, http.StatusOK, true, "", user)
 }
 
 func (s *Server) CreateUser(w http.ResponseWriter, r *http.Request) {
