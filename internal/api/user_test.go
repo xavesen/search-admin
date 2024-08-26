@@ -13,6 +13,8 @@ import (
 	"github.com/xavesen/search-admin/internal/models"
 	"github.com/xavesen/search-admin/internal/storage"
 	"github.com/xavesen/search-admin/internal/utils"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 var getAllUsersTests = []struct {
@@ -127,6 +129,90 @@ func TestGetAllUsersHandler(t *testing.T) {
 		server := NewServer("", test.storage, nil)
 
 		req, err := http.NewRequest(http.MethodGet, "/users", nil)
+		if err != nil {
+			t.Fatalf("Unable to create request, error: %s\n", err)
+		}
+
+		rr := httptest.NewRecorder()
+		server.router.ServeHTTP(rr, req)
+
+		expectedResp, err := json.Marshal(test.expectedResponse)
+		if err != nil {
+			t.Fatalf("Unable to marshal expected response, error: %s\n", err)
+		}
+
+		assert.Equal(t, rr.Code, test.expectedCode, "wrong response code")
+		assert.Equal(t, strings.Trim(rr.Body.String(), "\n"), string(expectedResp), "wrong body contents")
+	}
+}
+
+var getUserByIdTests = []struct {
+	testName			string
+	storage				*storage.StorageMock
+	userId				string
+	expectedCode		int
+	expectedResponse	utils.Response
+}{
+	{
+		testName: "Returns 200 and user",
+		storage: &storage.StorageMock{
+			Error: 	nil,
+			User:	models.User{
+				Id:	"1",
+				Login: "mary",
+				Password: "12345",
+				IndexLimit: 5,
+			},
+		},
+		userId: "1",
+		expectedCode: http.StatusOK,
+		expectedResponse: utils.Response{
+			Success: true,
+			ErrorMessage: "",
+			Data: models.User{
+				Id:	"1",
+				Login: "mary",
+				Password: "12345",
+				IndexLimit: 5,
+			},
+		},
+	},
+	{
+		testName: "Returns 404 when no such id in db",
+		storage: &storage.StorageMock{
+			Error: 	mongo.ErrNoDocuments,
+		},
+		userId: "2",
+		expectedCode: http.StatusNotFound,
+		expectedResponse: utils.Response{
+			Success: false,
+			ErrorMessage: "No user with such id",
+			Data: nil,
+		},
+	},
+	{
+		testName: "Returns 404 when id is invalid",
+		storage: &storage.StorageMock{
+			Error: 	primitive.ErrInvalidHex,
+		},
+		userId: "c",
+		expectedCode: http.StatusNotFound,
+		expectedResponse: utils.Response{
+			Success: false,
+			ErrorMessage: "No user with such id",
+			Data: nil,
+		},
+	},
+}
+
+func TestGetUserByIdHandler(t *testing.T) {
+	for i, test := range getUserByIdTests {
+		fmt.Printf("Running test #%d: %s\n", i+1, test.testName)
+
+		server := NewServer("", test.storage, nil)
+
+		path := fmt.Sprintf("/user/%s", test.userId)
+		req, err := http.NewRequest(http.MethodGet, path, nil)
 		if err != nil {
 			t.Fatalf("Unable to create request, error: %s\n", err)
 		}
