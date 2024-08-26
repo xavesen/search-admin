@@ -7,6 +7,8 @@ import (
 )
 
 type StorageMock struct {
+	Error	error
+	Users	[]models.User
 }
 
 func (s *StorageMock) CreateUser(ctx context.Context, user *models.User) (*models.User, error) {
@@ -14,7 +16,11 @@ func (s *StorageMock) CreateUser(ctx context.Context, user *models.User) (*model
 }
 
 func (s *StorageMock) GetAllUsers(ctx context.Context) ([]models.User, error) {
-	return []models.User{}, nil
+	if s.Error != nil {
+		return nil, s.Error
+	}
+
+	return s.Users, nil
 }
 
 func (s *StorageMock) GetUser(ctx context.Context, id string) (*models.User, error) {
