@@ -5,9 +5,12 @@ import (
 
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
+	"github.com/go-playground/validator/v10"
 	"github.com/xavesen/search-admin/internal/config"
 	"github.com/xavesen/search-admin/internal/middleware"
+	"github.com/xavesen/search-admin/internal/utils"
 	"github.com/xavesen/search-admin/internal/storage"
+	ut "github.com/go-playground/universal-translator"
 )
 
 type Server struct {
@@ -15,16 +18,24 @@ type Server struct {
 	storage 	storage.Storage
 	config		*config.Config
 	router 		*mux.Router
+	validator	*validator.Validate
+	translator	*ut.Translator
 }
 
 func NewServer(listenAddr string, storage storage.Storage, config *config.Config) *Server {
 	log.Debug("Initializing server")
+
+	validate, translator := utils.NewValidator()
+
 	server := Server{
 		listenAddr: listenAddr,
 		storage: 	storage,
 		config: 	config,
 		router: 	mux.NewRouter(),
+		validator:	validate,
+		translator: translator,
 	}
+	
 	server.initialiseRoutes()
 	return &server
 }

@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/go-playground/validator/v10"
 	"github.com/xavesen/search-admin/internal/models"
 	"github.com/xavesen/search-admin/internal/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -54,8 +55,21 @@ func (s *Server) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err := s.validator.Struct(newUser)
+	if err != nil {
+		errorString := "Bad request:"
+		for i, err := range err.(validator.ValidationErrors) {
+			if i != 0 {
+				errorString = errorString + ","
+			}
+			errorString = errorString + " " + err.Translate(*s.translator)
+		}
+		utils.WriteJSON(w, r, http.StatusBadRequest, false, errorString, nil)
+		return
+	}
+
 	ctx := context.TODO()
-	newUser, err := s.storage.CreateUser(ctx, newUser)
+	newUser, err = s.storage.CreateUser(ctx, newUser)
 	if err != nil {
 		utils.WriteJSON(w, r, http.StatusInternalServerError, false, "Internal server error", nil)
 		return
