@@ -5,11 +5,13 @@ import (
 
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
+	log "github.com/sirupsen/logrus"
 	"github.com/go-playground/validator/v10"
 	en_translations "github.com/go-playground/validator/v10/translations/en"
 )
 
 func NewValidator() (*validator.Validate, *ut.Translator) {
+	log.Debug("Initializing validator")
 	validate := validator.New(validator.WithRequiredStructEnabled())
 
 	translator := newTranslator(validate)
@@ -18,6 +20,8 @@ func NewValidator() (*validator.Validate, *ut.Translator) {
 }
 
 func newTranslator(validate *validator.Validate) *ut.Translator {
+	log.Debug("Initializing validator error translations")
+
 	fieldNameExceptions := map[string]string{
 		"indexlimit": "index_limit",
 	}

@@ -11,6 +11,7 @@ import (
 	"github.com/xavesen/search-admin/internal/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	log "github.com/sirupsen/logrus"
 )
 
 func (s *Server) GetAllUsers(w http.ResponseWriter, r *http.Request) {
@@ -57,13 +58,21 @@ func (s *Server) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	err := s.validator.Struct(newUser)
 	if err != nil {
+		logErrorString := "User input validation error:"
 		errorString := "Bad request:"
 		for i, err := range err.(validator.ValidationErrors) {
 			if i != 0 {
 				errorString = errorString + ","
+				logErrorString = logErrorString + ";"
 			}
 			errorString = errorString + " " + err.Translate(*s.translator)
+			logErrorString = logErrorString + " " + err.Error()
 		}
+		log.WithFields(log.Fields{
+			"request_id": r.Context().Value(utils.ContextKeyReqId),
+			"method": r.Method,
+			"url_path": r.URL.Path,
+		}).Warning(logErrorString)
 		utils.WriteJSON(w, r, http.StatusBadRequest, false, errorString, nil)
 		return
 	}
