@@ -1,20 +1,21 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"testing"
 	"strings"
+	"testing"
 
 	"github.com/magiconair/properties/assert"
 	"github.com/xavesen/search-admin/internal/models"
 	"github.com/xavesen/search-admin/internal/storage"
 	"github.com/xavesen/search-admin/internal/utils"
-	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 var getAllUsersTests = []struct {
@@ -213,6 +214,130 @@ func TestGetUserByIdHandler(t *testing.T) {
 
 		path := fmt.Sprintf("/user/%s", test.userId)
 		req, err := http.NewRequest(http.MethodGet, path, nil)
+		if err != nil {
+			t.Fatalf("Unable to create request, error: %s\n", err)
+		}
+
+		rr := httptest.NewRecorder()
+		server.router.ServeHTTP(rr, req)
+
+		expectedResp, err := json.Marshal(test.expectedResponse)
+		if err != nil {
+			t.Fatalf("Unable to marshal expected response, error: %s\n", err)
+		}
+
+		assert.Equal(t, rr.Code, test.expectedCode, "wrong response code")
+		assert.Equal(t, strings.Trim(rr.Body.String(), "\n"), string(expectedResp), "wrong body contents")
+	}
+}
+
+var createUserTests = []struct {
+	testName			string
+	storage				*storage.StorageMock
+	payload				*models.User
+	expectedCode		int
+	expectedResponse	utils.Response
+}{
+	{
+		testName: "Returns 200 and user with id when payload is correct",
+		storage: &storage.StorageMock{
+			Error: 	nil,
+		},
+		payload: &models.User{
+				Login: "mary",
+				Password: "12345",
+				IndexLimit: 5,
+		},
+		expectedCode: http.StatusCreated,
+		expectedResponse: utils.Response{
+			Success: true,
+			ErrorMessage: "",
+			Data: models.User{
+				Id:	"1",
+				Login: "mary",
+				Password: "12345",
+				IndexLimit: 5,
+			},
+		},
+	},
+	{
+		testName: "Returns 400 with empty payload",
+		storage: &storage.StorageMock{
+			Error: 	nil,
+		},
+		payload:  &models.User{
+		},
+		expectedCode: http.StatusBadRequest,
+		expectedResponse: utils.Response{
+			Success: false,
+			ErrorMessage: "Bad request: login is required, password is required, index_limit is required",
+			Data: nil,
+		},
+	},
+	{
+		testName: "Returns 400 without login",
+		storage: &storage.StorageMock{
+			Error: 	nil,
+		},
+		payload:  &models.User{
+			Password: "12345",
+			IndexLimit: 5,
+		},
+		expectedCode: http.StatusBadRequest,
+		expectedResponse: utils.Response{
+			Success: false,
+			ErrorMessage: "Bad request: login is required",
+			Data: nil,
+		},
+	},
+	{
+		testName: "Returns 400 without index_limit",
+		storage: &storage.StorageMock{
+			Error: 	nil,
+		},
+		payload: &models.User{
+			Login: "mary",
+			Password: "12345",
+		},
+		expectedCode: http.StatusBadRequest,
+		expectedResponse: utils.Response{
+			Success: false,
+			ErrorMessage: "Bad request: index_limit is required",
+			Data: nil,
+		},
+	},
+	{
+		testName: "Returns 400 without password",
+		storage: &storage.StorageMock{
+			Error: 	nil,
+		},
+		payload:  &models.User{
+			Login: "mary",
+			IndexLimit: 5,
+		},
+		expectedCode: http.StatusBadRequest,
+		expectedResponse: utils.Response{
+			Success: false,
+			ErrorMessage: "Bad request: password is required",
+			Data: nil,
+		},
+	},
+}
+
+func TestCreateUserHandler(t *testing.T) {
+	for i, test := range createUserTests {
+		fmt.Printf("Running test #%d: %s\n", i+1, test.testName)
+
+		server := NewServer("", test.storage, nil)
+
+		marshaledPayload, err := json.Marshal(test.payload)
+		if err != nil {
+			t.Fatalf("Unable to marshal payload, error: %s\n", err)
+		}
+
+		fmt.Println()
+
+		req, err := http.NewRequest(http.MethodPost, "/user", bytes.NewBuffer(marshaledPayload))
 		if err != nil {
 			t.Fatalf("Unable to create request, error: %s\n", err)
 		}

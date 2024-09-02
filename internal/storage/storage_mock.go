@@ -13,7 +13,13 @@ type StorageMock struct {
 }
 
 func (s *StorageMock) CreateUser(ctx context.Context, user *models.User) (*models.User, error) {
-	return nil, nil
+	if s.Error != nil {
+		return nil, s.Error
+	}
+
+	user.Id = "1"
+
+	return user, nil
 }
 
 func (s *StorageMock) GetAllUsers(ctx context.Context) ([]models.User, error) {
