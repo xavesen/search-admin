@@ -354,3 +354,89 @@ func TestCreateUserHandler(t *testing.T) {
 		assert.Equal(t, strings.Trim(rr.Body.String(), "\n"), string(expectedResp), "wrong body contents")
 	}
 }
+
+var deleteUserTests = []struct {
+	testName			string
+	storage				*storage.StorageMock
+	userId				string
+	expectedCode		int
+	expectedResponse	utils.Response
+}{
+	{
+		testName: "Returns 200",
+		storage: &storage.StorageMock{
+			Error: 	nil,
+		},
+		userId: "1",
+		expectedCode: http.StatusOK,
+		expectedResponse: utils.Response{
+			Success: true,
+			ErrorMessage: "",
+			Data: nil,
+		},
+	},
+	{
+		testName: "Returns 404 when no user with such id in db",
+		storage: &storage.StorageMock{
+			Error: 	mongo.ErrNoDocuments,
+		},
+		userId: "1",
+		expectedCode: http.StatusNotFound,
+		expectedResponse: utils.Response{
+			Success: false,
+			ErrorMessage: "No user with such id",
+			Data: nil,
+		},
+	},
+	{
+		testName: "Returns 404 when id is invalid",
+		storage: &storage.StorageMock{
+			Error: 	primitive.ErrInvalidHex,
+		},
+		userId: "1",
+		expectedCode: http.StatusNotFound,
+		expectedResponse: utils.Response{
+			Success: false,
+			ErrorMessage: "No user with such id",
+			Data: nil,
+		},
+	},
+	{
+		testName: "Returns 500 when db returns an error",
+		storage: &storage.StorageMock{
+			Error: 	errors.New("random error"),
+		},
+		userId: "1",
+		expectedCode: http.StatusInternalServerError,
+		expectedResponse: utils.Response{
+			Success: false,
+			ErrorMessage: "Internal server error",
+			Data: nil,
+		},
+	},
+}
+
+func TestDeleteUserHandler(t *testing.T) {
+	for i, test := range deleteUserTests {
+		fmt.Printf("Running test #%d: %s\n", i+1, test.testName)
+
+		server := NewServer("", test.storage, nil)
+
+		path := fmt.Sprintf("/user/%s", test.userId)
+		req, err := http.NewRequest(http.MethodDelete, path, nil)
+		if err != nil {
+			t.Fatalf("Unable to create request, error: %s\n", err)
+		}
+
+		rr := httptest.NewRecorder()
+		server.router.ServeHTTP(rr, req)
+
+		expectedResp, err := json.Marshal(test.expectedResponse)
+		if err != nil {
+			t.Fatalf("Unable to marshal expected response, error: %s\n", err)
+		}
+
+		assert.Equal(t, rr.Code, test.expectedCode, "wrong response code")
+		assert.Equal(t, strings.Trim(rr.Body.String(), "\n"), string(expectedResp), "wrong body contents")
+	}
+}

@@ -39,5 +39,5 @@ func (s *StorageMock) GetUser(ctx context.Context, id string) (*models.User, err
 }
 
 func (s *StorageMock) DeleteUser(ctx context.Context, id string) error {
-	return nil
+	return s.Error
 }
