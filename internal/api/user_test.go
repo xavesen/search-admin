@@ -239,7 +239,7 @@ var createUserTests = []struct {
 	expectedResponse	utils.Response
 }{
 	{
-		testName: "Returns 200 and user with id when payload is correct",
+		testName: "Returns 201 and user with id when payload is correct",
 		storage: &storage.StorageMock{
 			Error: 	nil,
 		},

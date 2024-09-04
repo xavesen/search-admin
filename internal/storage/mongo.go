@@ -13,9 +13,10 @@ import (
 )
 
 type MongoStorage struct {
-	client 			*mongo.Client
-	database 		*mongo.Database
-	usersCollection	*mongo.Collection
+	client 				*mongo.Client
+	database 			*mongo.Database
+	usersCollection		*mongo.Collection
+	filtersCollection	*mongo.Collection
 }
 
 func NewMongoStorage(ctx context.Context, addr string, db string, user string, password string) (*MongoStorage, error) {
@@ -46,11 +47,13 @@ func NewMongoStorage(ctx context.Context, addr string, db string, user string, p
 	log.Debug("Initializing db and collections")
 	appDb := newClient.Database(db)
 	usersCol := appDb.Collection("users")
+	filtersCol := appDb.Collection("filters")
 
 	newStorage := &MongoStorage{
 		client: newClient,
 		database: appDb,
 		usersCollection: usersCol,
+		filtersCollection: filtersCol,
 	}
 
 	log.Info("Successfully initialized and connected mongo db")
@@ -190,4 +193,25 @@ func (s *MongoStorage) UpdateUser(ctx context.Context, user *models.User) error 
 	}
 
 	return nil
+}
+
+func (s *MongoStorage) CreateFilter(ctx context.Context, filter *models.Filter) (*models.Filter, error) {
+	log.Debugf("Inserting filter %s to db", filter)
+
+	result, err := s.filtersCollection.InsertOne(ctx, filter)
+	if err != nil {
+		log.Errorf("Error inserting filter %s to db: %s", filter, err.Error())
+		return nil, err
+	}
+
+	id, ok := getOid(result.InsertedID)
+	if !ok {
+		log.Errorf("Unable to get oid from interface returned by db after trying to insert filter %s", filter)
+		return nil, errors.New("db did not return object id")
+	}
+
+	filter.Id = id
+
+	log.Debugf("Successfully inserted filter %s to db", filter)
+	return filter, nil
 }

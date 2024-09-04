@@ -45,3 +45,13 @@ func (s *StorageMock) DeleteUser(ctx context.Context, id string) error {
 func (s *StorageMock) UpdateUser(ctx context.Context, user *models.User) error{
 	return s.Error
 }
+
+func (s *StorageMock) CreateFilter(ctx context.Context, filter *models.Filter) (*models.Filter, error) {
+	if s.Error != nil {
+		return nil, s.Error
+	}
+
+	filter.Id = "1"
+
+	return filter, nil
+}
