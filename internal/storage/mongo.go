@@ -215,3 +215,31 @@ func (s *MongoStorage) CreateFilter(ctx context.Context, filter *models.Filter) 
 	log.Debugf("Successfully inserted filter %s to db", filter)
 	return filter, nil
 }
+
+func (s *MongoStorage) GetAllFilters(ctx context.Context) ([]models.Filter, error) {
+	log.Debug("Getting all filters from db")
+	filters := []models.Filter{}
+
+	filter := bson.D{{}}
+	cur, err := s.filtersCollection.Find(ctx, filter)
+	if err != nil {
+		log.Errorf("Error finding all filters in db: %s", err.Error())
+		return filters, err
+	}
+
+	if err = cur.All(ctx, &filters); err != nil {
+		log.Errorf("Error iterating and decoding all filters from db: %s", err.Error())
+		return filters, err
+	}
+
+	log.Debug("Successfully got all filters from db")
+	if log.IsLevelEnabled(log.TraceLevel) {
+		filtersString := ""
+		for _, filter := range filters {
+			filtersString = filtersString + filter.String() + ", "
+		}
+		log.Tracef("Filters from db: [%s]", filtersString)
+	}
+
+	return filters, nil
+}

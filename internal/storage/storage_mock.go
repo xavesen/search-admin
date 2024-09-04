@@ -10,6 +10,7 @@ type StorageMock struct {
 	Error	error
 	Users	[]models.User
 	User 	models.User
+	Filters	[]models.Filter
 }
 
 func (s *StorageMock) CreateUser(ctx context.Context, user *models.User) (*models.User, error) {
@@ -54,4 +55,12 @@ func (s *StorageMock) CreateFilter(ctx context.Context, filter *models.Filter) (
 	filter.Id = "1"
 
 	return filter, nil
+}
+
+func (s *StorageMock) GetAllFilters(ctx context.Context) ([]models.Filter, error) {
+	if s.Error != nil {
+		return nil, s.Error
+	}
+
+	return s.Filters, nil
 }

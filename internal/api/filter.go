@@ -62,3 +62,14 @@ func (s *Server) CreateFilter(w http.ResponseWriter, r *http.Request) {
 
 	utils.WriteJSON(w, r, http.StatusCreated, true, "", newFilter)
 }
+
+func (s *Server) GetAllFilters(w http.ResponseWriter, r *http.Request) {
+	ctx := context.TODO()
+	filters, err := s.storage.GetAllFilters(ctx)
+	if err != nil {
+		utils.WriteJSON(w, r, http.StatusInternalServerError, false, "Internal server error", nil)
+		return
+	}
+
+	utils.WriteJSON(w, r, http.StatusOK, true, "", filters)
+}

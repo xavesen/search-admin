@@ -115,3 +115,113 @@ func TestCreateFilterHandler(t *testing.T) {
 		assert.Equal(t, strings.Trim(rr.Body.String(), "\n"), string(expectedResp), "wrong body contents")
 	}
 }
+
+var getAllFiltersTests = []struct {
+	testName			string
+	storage				*storage.StorageMock
+	expectedCode		int
+	expectedResponse	utils.Response
+}{
+	{
+		testName: "Return 200 and all filters",
+		storage: &storage.StorageMock{
+			Error: 	nil,
+			Filters:	[]models.Filter{
+				{
+					Id:	"1",
+					Regex: "^[a-zA-Z]+$",
+				},
+				{
+					Id:	"2",
+					Regex: "^[a-zA-Z0-9]+$",
+				},
+				{
+					Id:	"3",
+					Regex: "^[\\p{L}]+$",
+				},
+			},
+		},
+		expectedCode: http.StatusOK,
+		expectedResponse: utils.Response{
+			Success: true,
+			ErrorMessage: "",
+			Data: []models.Filter{
+				{
+					Id:	"1",
+					Regex: "^[a-zA-Z]+$",
+				},
+				{
+					Id:	"2",
+					Regex: "^[a-zA-Z0-9]+$",
+				},
+				{
+					Id:	"3",
+					Regex: "^[\\p{L}]+$",
+				},
+			},
+		},
+	},
+	{
+		testName: "Return 200 but there are no filters in db",
+		storage: &storage.StorageMock{
+			Error: 		nil,
+			Filters:	[]models.Filter{},
+		},
+		expectedCode: http.StatusOK,
+		expectedResponse: utils.Response{
+			Success: true,
+			ErrorMessage: "",
+			Data: []models.Filter{},
+		},
+	},
+	{
+		testName: "Return 500 when DB returns an error",
+		storage: &storage.StorageMock{
+			Error: 	errors.New("random error"),
+			Filters:	[]models.Filter{
+				{
+					Id:	"1",
+					Regex: "^[a-zA-Z]+$",
+				},
+				{
+					Id:	"2",
+					Regex: "^[a-zA-Z0-9]+$",
+				},
+				{
+					Id:	"3",
+					Regex: "^[\\p{L}]+$",
+				},
+			},
+		},
+		expectedCode: http.StatusInternalServerError,
+		expectedResponse: utils.Response{
+			Success: false,
+			ErrorMessage: "Internal server error",
+			Data: nil,
+		},
+	},
+}
+
+func TestGetAllFiltersHandler(t *testing.T) {
+	for i, test := range getAllFiltersTests {
+		fmt.Printf("Running test #%d: %s\n", i+1, test.testName)
+
+		server := NewServer("", test.storage, nil)
+
+		req, err := http.NewRequest(http.MethodGet, "/filters", nil)
+		if err != nil {
+			t.Fatalf("Unable to create request, error: %s\n", err)
+		}
+
+		rr := httptest.NewRecorder()
+		server.router.ServeHTTP(rr, req)
+
+		expectedResp, err := json.Marshal(test.expectedResponse)
+		if err != nil {
+			t.Fatalf("Unable to marshal expected response, error: %s\n", err)
+		}
+
+		assert.Equal(t, rr.Code, test.expectedCode, "wrong response code")
+		assert.Equal(t, strings.Trim(rr.Body.String(), "\n"), string(expectedResp), "wrong body contents")
+	}
+}
