@@ -335,8 +335,6 @@ func TestCreateUserHandler(t *testing.T) {
 			t.Fatalf("Unable to marshal payload, error: %s\n", err)
 		}
 
-		fmt.Println()
-
 		req, err := http.NewRequest(http.MethodPost, "/user", bytes.NewBuffer(marshaledPayload))
 		if err != nil {
 			t.Fatalf("Unable to create request, error: %s\n", err)
@@ -424,6 +422,189 @@ func TestDeleteUserHandler(t *testing.T) {
 
 		path := fmt.Sprintf("/user/%s", test.userId)
 		req, err := http.NewRequest(http.MethodDelete, path, nil)
+		if err != nil {
+			t.Fatalf("Unable to create request, error: %s\n", err)
+		}
+
+		rr := httptest.NewRecorder()
+		server.router.ServeHTTP(rr, req)
+
+		expectedResp, err := json.Marshal(test.expectedResponse)
+		if err != nil {
+			t.Fatalf("Unable to marshal expected response, error: %s\n", err)
+		}
+
+		assert.Equal(t, rr.Code, test.expectedCode, "wrong response code")
+		assert.Equal(t, strings.Trim(rr.Body.String(), "\n"), string(expectedResp), "wrong body contents")
+	}
+}
+
+var updateUserTests = []struct {
+	testName			string
+	storage				*storage.StorageMock
+	payload				*models.User
+	userId				string
+	expectedCode		int
+	expectedResponse	utils.Response
+}{
+	{
+		testName: "Returns 200",
+		storage: &storage.StorageMock{
+			Error: 	nil,
+		},
+		userId: "66d8420df6e5311a791e0a08",
+		payload: &models.User{
+			Login: "mary",
+			Password: "12345",
+			IndexLimit: 5,
+		},
+		expectedCode: http.StatusOK,
+		expectedResponse: utils.Response{
+			Success: true,
+			ErrorMessage: "",
+			Data: models.User{
+				Id:	"66d8420df6e5311a791e0a08",
+				Login: "mary",
+				Password: "12345",
+				IndexLimit: 5,
+			},
+		},
+	},
+	{
+		testName: "Returns 400 with empty payload",
+		storage: &storage.StorageMock{
+			Error: 	nil,
+		},
+		userId: "66d8420df6e5311a791e0a08",
+		payload:  &models.User{
+		},
+		expectedCode: http.StatusBadRequest,
+		expectedResponse: utils.Response{
+			Success: false,
+			ErrorMessage: "Bad request: login is required, password is required, index_limit is required",
+			Data: nil,
+		},
+	},
+	{
+		testName: "Returns 400 without login",
+		storage: &storage.StorageMock{
+			Error: 	nil,
+		},
+		userId: "66d8420df6e5311a791e0a08",
+		payload:  &models.User{
+			Password: "12345",
+			IndexLimit: 5,
+		},
+		expectedCode: http.StatusBadRequest,
+		expectedResponse: utils.Response{
+			Success: false,
+			ErrorMessage: "Bad request: login is required",
+			Data: nil,
+		},
+	},
+	{
+		testName: "Returns 400 without index_limit",
+		storage: &storage.StorageMock{
+			Error: 	nil,
+		},
+		userId: "66d8420df6e5311a791e0a08",
+		payload:  &models.User{
+			Login: "mary",
+			Password: "12345",
+		},
+		expectedCode: http.StatusBadRequest,
+		expectedResponse: utils.Response{
+			Success: false,
+			ErrorMessage: "Bad request: index_limit is required",
+			Data: nil,
+		},
+	},
+	{
+		testName: "Returns 400 without password",
+		storage: &storage.StorageMock{
+			Error: 	nil,
+		},
+		userId: "66d8420df6e5311a791e0a08",
+		payload:  &models.User{
+			Login: "mary",
+			IndexLimit: 5,
+		},
+		expectedCode: http.StatusBadRequest,
+		expectedResponse: utils.Response{
+			Success: false,
+			ErrorMessage: "Bad request: password is required",
+			Data: nil,
+		},
+	},
+	{
+		testName: "Returns 404 when no such id in db",
+		storage: &storage.StorageMock{
+			Error: 	mongo.ErrNoDocuments,
+		},
+		userId: "66d8420df6e5311a791e0a08",
+		payload:  &models.User{
+			Login: "mary",
+			Password: "12345",
+			IndexLimit: 5,
+		},
+		expectedCode: http.StatusNotFound,
+		expectedResponse: utils.Response{
+			Success: false,
+			ErrorMessage: "No user with such id",
+			Data: nil,
+		},
+	},
+	{
+		testName: "Returns 404 when id is invalid",
+		storage: &storage.StorageMock{
+			Error: 	primitive.ErrInvalidHex,
+		},
+		userId: "c",
+		payload:  &models.User{
+			Login: "mary",
+			Password: "12345",
+			IndexLimit: 5,
+		},
+		expectedCode: http.StatusNotFound,
+		expectedResponse: utils.Response{
+			Success: false,
+			ErrorMessage: "No user with such id",
+			Data: nil,
+		},
+	},
+	{
+		testName: "Returns 500 when db returns an error",
+		storage: &storage.StorageMock{
+			Error: 	errors.New("random error"),
+		},
+		userId: "66d8420df6e5311a791e0a08",
+		payload:  &models.User{
+			Login: "mary",
+			Password: "12345",
+			IndexLimit: 5,
+		},
+		expectedCode: http.StatusInternalServerError,
+		expectedResponse: utils.Response{
+			Success: false,
+			ErrorMessage: "Internal server error",
+			Data: nil,
+		},
+	},
+}
+
+func TestUpdateUserHandler(t *testing.T) {
+	for i, test := range updateUserTests {
+		fmt.Printf("Running test #%d: %s\n", i+1, test.testName)
+
+		server := NewServer("", test.storage, nil)
+
+		marshaledPayload, err := json.Marshal(test.payload)
+		if err != nil {
+			t.Fatalf("Unable to marshal payload, error: %s\n", err)
+		}
+
+		path := fmt.Sprintf("/user/%s", test.userId)
+		req, err := http.NewRequest(http.MethodPut, path, bytes.NewBuffer(marshaledPayload))
 		if err != nil {
 			t.Fatalf("Unable to create request, error: %s\n", err)
 		}

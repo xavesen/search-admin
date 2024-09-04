@@ -41,3 +41,7 @@ func (s *StorageMock) GetUser(ctx context.Context, id string) (*models.User, err
 func (s *StorageMock) DeleteUser(ctx context.Context, id string) error {
 	return s.Error
 }
+
+func (s *StorageMock) UpdateUser(ctx context.Context, user *models.User) error{
+	return s.Error
+}

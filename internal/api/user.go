@@ -108,3 +108,56 @@ func (s *Server) DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	utils.WriteJSON(w, r, http.StatusOK, true, "", nil)
 }
+
+func (s *Server) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, ok := vars["id"]
+	if !ok {
+		utils.WriteJSON(w, r, http.StatusBadRequest, false, "No user id provided", nil)
+		return
+	}
+
+	var updatedUser *models.User
+
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&updatedUser) ; err != nil {
+		utils.WriteJSON(w, r, http.StatusBadRequest, false, "Invalid request payload", nil)
+		return
+	}
+
+	err := s.validator.Struct(updatedUser)
+	if err != nil {
+		logErrorString := "User input validation error:"
+		errorString := "Bad request:"
+		for i, err := range err.(validator.ValidationErrors) {
+			if i != 0 {
+				errorString = errorString + ","
+				logErrorString = logErrorString + ";"
+			}
+			errorString = errorString + " " + err.Translate(*s.translator)
+			logErrorString = logErrorString + " " + err.Error()
+		}
+		log.WithFields(log.Fields{
+			"request_id": r.Context().Value(utils.ContextKeyReqId),
+			"method": r.Method,
+			"url_path": r.URL.Path,
+		}).Warning(logErrorString)
+		utils.WriteJSON(w, r, http.StatusBadRequest, false, errorString, nil)
+		return
+	}
+
+	updatedUser.Id = id
+
+	ctx := context.TODO()
+	err = s.storage.UpdateUser(ctx, updatedUser)
+	if err != nil {
+		if err == mongo.ErrNoDocuments || err == primitive.ErrInvalidHex {
+			utils.WriteJSON(w, r, http.StatusNotFound, false, "No user with such id", nil)
+		} else {
+			utils.WriteJSON(w, r, http.StatusInternalServerError, false, "Internal server error", nil)
+		}
+		return
+	}
+
+	utils.WriteJSON(w, r, http.StatusOK, true, "", updatedUser)
+}

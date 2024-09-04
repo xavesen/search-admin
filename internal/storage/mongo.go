@@ -163,3 +163,31 @@ func (s *MongoStorage) DeleteUser(ctx context.Context, id string) error {
 	log.Debugf("Successfully deleted user with id %s from db", id)
 	return nil
 }
+
+func (s *MongoStorage) UpdateUser(ctx context.Context, user *models.User) error {
+	log.Debugf("Updating user with id %s: %s", user.Id, user)
+
+	oid, err := primitive.ObjectIDFromHex(user.Id)
+	if err != nil {
+		log.Warningf("Error converting id string %s to object id while updating user in db: %s", user.Id, err.Error())
+		return err
+	}
+
+	update := bson.D{
+		{Key: "$set", Value: bson.D{
+			{Key: "login", Value: user.Login},
+			{Key: "password", Value: user.Password},
+			{Key: "index_limit", Value: user.IndexLimit},
+		}},
+	}
+
+	result, err := s.usersCollection.UpdateByID(ctx, oid, update)
+	if err != nil {
+		return err
+	} else if result.MatchedCount < 1 {
+		log.Warningf("Tried to update in db non-existent user with id %s ", user.Id)
+		return mongo.ErrNoDocuments
+	}
+
+	return nil
+}
