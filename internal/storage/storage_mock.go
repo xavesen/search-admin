@@ -11,6 +11,7 @@ type StorageMock struct {
 	Users	[]models.User
 	User 	models.User
 	Filters	[]models.Filter
+	Filter 	models.Filter
 }
 
 func (s *StorageMock) CreateUser(ctx context.Context, user *models.User) (*models.User, error) {
@@ -67,4 +68,12 @@ func (s *StorageMock) GetAllFilters(ctx context.Context) ([]models.Filter, error
 
 func (s *StorageMock) DeleteFilter(ctx context.Context, id string) error {
 	return s.Error
+}
+
+func (s *StorageMock) GetFilter(ctx context.Context, id string) (*models.Filter, error) {
+	if s.Error != nil {
+		return nil, s.Error
+	}
+
+	return &s.Filter, nil
 }

@@ -101,9 +101,9 @@ func (s *MongoStorage) GetUser(ctx context.Context, id string) (*models.User, er
 		log.Warningf("Error converting id string %s to object id while searching for user in db: %s", id, err.Error())
 		return nil, err
 	}
-	filter := bson.D{{Key: "_id", Value: oid}}
+	mongoFilter := bson.D{{Key: "_id", Value: oid}}
 
-	if err := s.usersCollection.FindOne(ctx, filter).Decode(&user); err != nil {
+	if err := s.usersCollection.FindOne(ctx, mongoFilter).Decode(&user); err != nil {
 		if err == mongo.ErrNoDocuments {
 			log.Warningf("Tried to find in db non-existent user with id %s ", id)
 		} else {
@@ -120,8 +120,8 @@ func (s *MongoStorage) GetAllUsers(ctx context.Context) ([]models.User, error) {
 	log.Debug("Getting all users from db")
 	users := []models.User{}
 
-	filter := bson.D{{}}
-	cur, err := s.usersCollection.Find(ctx, filter)
+	mongoFilter := bson.D{{}}
+	cur, err := s.usersCollection.Find(ctx, mongoFilter)
 	if err != nil {
 		log.Errorf("Error finding all users in db: %s", err.Error())
 		return users, err
@@ -152,9 +152,9 @@ func (s *MongoStorage) DeleteUser(ctx context.Context, id string) error {
 		log.Warningf("Error converting id string %s to object id while deleting user from db: %s", id, err.Error())
 		return err
 	}
-	filter := bson.D{{Key: "_id", Value: oid}}
+	mongoFilter := bson.D{{Key: "_id", Value: oid}}
 	
-	result, err := s.usersCollection.DeleteOne(ctx, filter)
+	result, err := s.usersCollection.DeleteOne(ctx, mongoFilter)
 	if err != nil {
 		log.Errorf("Error deleting user with id %s from db: %s", id, err.Error())
 		return err
@@ -220,8 +220,8 @@ func (s *MongoStorage) GetAllFilters(ctx context.Context) ([]models.Filter, erro
 	log.Debug("Getting all filters from db")
 	filters := []models.Filter{}
 
-	filter := bson.D{{}}
-	cur, err := s.filtersCollection.Find(ctx, filter)
+	mongoFilter := bson.D{{}}
+	cur, err := s.filtersCollection.Find(ctx, mongoFilter)
 	if err != nil {
 		log.Errorf("Error finding all filters in db: %s", err.Error())
 		return filters, err
@@ -252,9 +252,9 @@ func (s *MongoStorage) DeleteFilter(ctx context.Context, id string) error {
 		log.Warningf("Error converting id string %s to object id while deleting filter from db: %s", id, err.Error())
 		return err
 	}
-	filter := bson.D{{Key: "_id", Value: oid}}
+	mongoFilter := bson.D{{Key: "_id", Value: oid}}
 	
-	result, err := s.filtersCollection.DeleteOne(ctx, filter)
+	result, err := s.filtersCollection.DeleteOne(ctx, mongoFilter)
 	if err != nil {
 		log.Errorf("Error deleting filter with id %s from db: %s", id, err.Error())
 		return err
@@ -265,4 +265,28 @@ func (s *MongoStorage) DeleteFilter(ctx context.Context, id string) error {
 
 	log.Debugf("Successfully deleted filter with id %s from db", id)
 	return nil
+}
+
+func (s *MongoStorage) GetFilter(ctx context.Context, id string) (*models.Filter, error) {
+	log.Debugf("Searching for filter with id %s in db", id)
+	var filter *models.Filter
+
+	oid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Warningf("Error converting id string %s to object id while searching for filter in db: %s", id, err.Error())
+		return nil, err
+	}
+	mongoFilter := bson.D{{Key: "_id", Value: oid}}
+
+	if err := s.filtersCollection.FindOne(ctx, mongoFilter).Decode(&filter); err != nil {
+		if err == mongo.ErrNoDocuments {
+			log.Warningf("Tried to find in db non-existent filter with id %s ", id)
+		} else {
+			log.Errorf("Error searching for filter with id %s in db: %s", id, err.Error())
+		}
+		return nil, err
+	}
+
+	log.Debugf("Successfully found filter with id %s in db: %s", id, filter)
+	return filter, nil
 }

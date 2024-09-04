@@ -54,6 +54,7 @@ func (s *Server) initialiseRoutes() {
 	s.router.HandleFunc("/filter", s.CreateFilter).Methods("POST")
 	s.router.HandleFunc("/filters", s.GetAllFilters).Methods("GET")
 	s.router.HandleFunc("/filter/{id:[0-9a-z]+}", s.DeleteFilter).Methods("DELETE")
+	s.router.HandleFunc("/filter/{id:[0-9a-z]+}", s.GetFilterById).Methods("GET")
 }
  
 func (s *Server) Start() error {

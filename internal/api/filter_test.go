@@ -313,3 +313,96 @@ func TestDeleteFilterHandler(t *testing.T) {
 		assert.Equal(t, strings.Trim(rr.Body.String(), "\n"), string(expectedResp), "wrong body contents")
 	}
 }
+
+var getFilterByIdTests = []struct {
+	testName			string
+	storage				*storage.StorageMock
+	filterId			string
+	expectedCode		int
+	expectedResponse	utils.Response
+}{
+	{
+		testName: "Returns 200 and filter",
+		storage: &storage.StorageMock{
+			Error: 	nil,
+			Filter:	models.Filter{
+				Id:	"1",
+				Regex: "^[a-zA-Z]+$",
+			},
+		},
+		filterId: "1",
+		expectedCode: http.StatusOK,
+		expectedResponse: utils.Response{
+			Success: true,
+			ErrorMessage: "",
+			Data: 	models.Filter{
+				Id:	"1",
+				Regex: "^[a-zA-Z]+$",
+			},
+		},
+	},
+	{
+		testName: "Returns 404 when no such id in db",
+		storage: &storage.StorageMock{
+			Error: 	mongo.ErrNoDocuments,
+		},
+		filterId: "2",
+		expectedCode: http.StatusNotFound,
+		expectedResponse: utils.Response{
+			Success: false,
+			ErrorMessage: "No filter with such id",
+			Data: nil,
+		},
+	},
+	{
+		testName: "Returns 404 when id is invalid",
+		storage: &storage.StorageMock{
+			Error: 	primitive.ErrInvalidHex,
+		},
+		filterId: "c",
+		expectedCode: http.StatusNotFound,
+		expectedResponse: utils.Response{
+			Success: false,
+			ErrorMessage: "No filter with such id",
+			Data: nil,
+		},
+	},
+	{
+		testName: "Returns 500 when db returns an error",
+		storage: &storage.StorageMock{
+			Error: 	errors.New("random error"),
+		},
+		filterId: "1",
+		expectedCode: http.StatusInternalServerError,
+		expectedResponse: utils.Response{
+			Success: false,
+			ErrorMessage: "Internal server error",
+			Data: nil,
+		},
+	},
+}
+
+func TestGetFilterByIdHandler(t *testing.T) {
+	for i, test := range getFilterByIdTests {
+		fmt.Printf("Running test #%d: %s\n", i+1, test.testName)
+
+		server := NewServer("", test.storage, nil)
+
+		path := fmt.Sprintf("/filter/%s", test.filterId)
+		req, err := http.NewRequest(http.MethodGet, path, nil)
+		if err != nil {
+			t.Fatalf("Unable to create request, error: %s\n", err)
+		}
+
+		rr := httptest.NewRecorder()
+		server.router.ServeHTTP(rr, req)
+
+		expectedResp, err := json.Marshal(test.expectedResponse)
+		if err != nil {
+			t.Fatalf("Unable to marshal expected response, error: %s\n", err)
+		}
+
+		assert.Equal(t, rr.Code, test.expectedCode, "wrong response code")
+		assert.Equal(t, strings.Trim(rr.Body.String(), "\n"), string(expectedResp), "wrong body contents")
+	}
+}

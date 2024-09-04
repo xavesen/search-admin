@@ -15,4 +15,5 @@ type Storage interface{
 	CreateFilter(ctx context.Context, filter *models.Filter) (*models.Filter, error)
 	GetAllFilters(ctx context.Context) ([]models.Filter, error)
 	DeleteFilter(ctx context.Context, id string) error
+	GetFilter(ctx context.Context, id string) (*models.Filter, error)
 }

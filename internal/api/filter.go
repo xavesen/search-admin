@@ -98,3 +98,25 @@ func (s *Server) DeleteFilter(w http.ResponseWriter, r *http.Request) {
 
 	utils.WriteJSON(w, r, http.StatusOK, true, "", nil)
 }
+
+func (s *Server) GetFilterById(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, ok := vars["id"]
+	if !ok {
+		utils.WriteJSON(w, r, http.StatusBadRequest, false, "No filter id provided", nil)
+		return
+	}
+
+	ctx := context.TODO()
+	filter, err := s.storage.GetFilter(ctx, id)
+	if err != nil {
+		if err == mongo.ErrNoDocuments || err == primitive.ErrInvalidHex {
+			utils.WriteJSON(w, r, http.StatusNotFound, false, "No filter with such id", nil)
+		} else {
+			utils.WriteJSON(w, r, http.StatusInternalServerError, false, "Internal server error", nil)
+		}
+		return
+	}
+
+	utils.WriteJSON(w, r, http.StatusOK, true, "", filter)
+}
