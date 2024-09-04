@@ -19,7 +19,6 @@ type MongoStorage struct {
 }
 
 func NewMongoStorage(ctx context.Context, addr string, db string, user string, password string) (*MongoStorage, error) {
-	// FIXME: actually use addr!
 	log.Infof("Initializing client and connecting mongo db %s on %s with user %s", db, addr, user)
 
 	clientCreds := options.Credential{
@@ -29,6 +28,7 @@ func NewMongoStorage(ctx context.Context, addr string, db string, user string, p
 	}
 	clientOpts := options.Client()
 	clientOpts.SetAuth(clientCreds)
+	clientOpts.SetHosts([]string{addr})
 
 	log.Debug("Initializing mongo client")
 	newClient, err := mongo.Connect(ctx, clientOpts)
