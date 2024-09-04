@@ -5,10 +5,13 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	"github.com/go-playground/validator/v10"
 	"github.com/xavesen/search-admin/internal/models"
 	"github.com/xavesen/search-admin/internal/utils"
 	log "github.com/sirupsen/logrus"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"regexp"
 )
 
@@ -72,4 +75,26 @@ func (s *Server) GetAllFilters(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.WriteJSON(w, r, http.StatusOK, true, "", filters)
+}
+
+func (s *Server) DeleteFilter(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, ok := vars["id"]
+	if !ok {
+		utils.WriteJSON(w, r, http.StatusBadRequest, false, "No filter id provided", nil)
+		return
+	}
+
+	ctx := context.TODO()
+	err := s.storage.DeleteFilter(ctx, id)
+	if err != nil {
+		if err == mongo.ErrNoDocuments || err == primitive.ErrInvalidHex {
+			utils.WriteJSON(w, r, http.StatusNotFound, false, "No filter with such id", nil)
+		} else {
+			utils.WriteJSON(w, r, http.StatusInternalServerError, false, "Internal server error", nil)
+		}
+		return
+	}
+
+	utils.WriteJSON(w, r, http.StatusOK, true, "", nil)
 }

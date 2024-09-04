@@ -64,3 +64,7 @@ func (s *StorageMock) GetAllFilters(ctx context.Context) ([]models.Filter, error
 
 	return s.Filters, nil
 }
+
+func (s *StorageMock) DeleteFilter(ctx context.Context, id string) error {
+	return s.Error
+}

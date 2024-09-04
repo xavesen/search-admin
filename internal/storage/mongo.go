@@ -243,3 +243,26 @@ func (s *MongoStorage) GetAllFilters(ctx context.Context) ([]models.Filter, erro
 
 	return filters, nil
 }
+
+func (s *MongoStorage) DeleteFilter(ctx context.Context, id string) error {
+	log.Debugf("Deleting filter with id %s", id)
+
+	oid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Warningf("Error converting id string %s to object id while deleting filter from db: %s", id, err.Error())
+		return err
+	}
+	filter := bson.D{{Key: "_id", Value: oid}}
+	
+	result, err := s.filtersCollection.DeleteOne(ctx, filter)
+	if err != nil {
+		log.Errorf("Error deleting filter with id %s from db: %s", id, err.Error())
+		return err
+	} else if result.DeletedCount < 1 {
+		log.Warningf("Tried to delete from db non-existent filter with id %s ", id)
+		return mongo.ErrNoDocuments
+	}
+
+	log.Debugf("Successfully deleted filter with id %s from db", id)
+	return nil
+}

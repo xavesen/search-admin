@@ -14,6 +14,8 @@ import (
 	"github.com/xavesen/search-admin/internal/models"
 	"github.com/xavesen/search-admin/internal/storage"
 	"github.com/xavesen/search-admin/internal/utils"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 var createFilterTests = []struct {
@@ -209,6 +211,92 @@ func TestGetAllFiltersHandler(t *testing.T) {
 		server := NewServer("", test.storage, nil)
 
 		req, err := http.NewRequest(http.MethodGet, "/filters", nil)
+		if err != nil {
+			t.Fatalf("Unable to create request, error: %s\n", err)
+		}
+
+		rr := httptest.NewRecorder()
+		server.router.ServeHTTP(rr, req)
+
+		expectedResp, err := json.Marshal(test.expectedResponse)
+		if err != nil {
+			t.Fatalf("Unable to marshal expected response, error: %s\n", err)
+		}
+
+		assert.Equal(t, rr.Code, test.expectedCode, "wrong response code")
+		assert.Equal(t, strings.Trim(rr.Body.String(), "\n"), string(expectedResp), "wrong body contents")
+	}
+}
+
+var deleteFilterTests = []struct {
+	testName			string
+	storage				*storage.StorageMock
+	filterId				string
+	expectedCode		int
+	expectedResponse	utils.Response
+}{
+	{
+		testName: "Returns 200",
+		storage: &storage.StorageMock{
+			Error: 	nil,
+		},
+		filterId: "1",
+		expectedCode: http.StatusOK,
+		expectedResponse: utils.Response{
+			Success: true,
+			ErrorMessage: "",
+			Data: nil,
+		},
+	},
+	{
+		testName: "Returns 404 when no filter with such id in db",
+		storage: &storage.StorageMock{
+			Error: 	mongo.ErrNoDocuments,
+		},
+		filterId: "1",
+		expectedCode: http.StatusNotFound,
+		expectedResponse: utils.Response{
+			Success: false,
+			ErrorMessage: "No filter with such id",
+			Data: nil,
+		},
+	},
+	{
+		testName: "Returns 404 when id is invalid",
+		storage: &storage.StorageMock{
+			Error: 	primitive.ErrInvalidHex,
+		},
+		filterId: "1",
+		expectedCode: http.StatusNotFound,
+		expectedResponse: utils.Response{
+			Success: false,
+			ErrorMessage: "No filter with such id",
+			Data: nil,
+		},
+	},
+	{
+		testName: "Returns 500 when db returns an error",
+		storage: &storage.StorageMock{
+			Error: 	errors.New("random error"),
+		},
+		filterId: "1",
+		expectedCode: http.StatusInternalServerError,
+		expectedResponse: utils.Response{
+			Success: false,
+			ErrorMessage: "Internal server error",
+			Data: nil,
+		},
+	},
+}
+
+func TestDeleteFilterHandler(t *testing.T) {
+	for i, test := range deleteFilterTests {
+		fmt.Printf("Running test #%d: %s\n", i+1, test.testName)
+
+		server := NewServer("", test.storage, nil)
+
+		path := fmt.Sprintf("/filter/%s", test.filterId)
+		req, err := http.NewRequest(http.MethodDelete, path, nil)
 		if err != nil {
 			t.Fatalf("Unable to create request, error: %s\n", err)
 		}

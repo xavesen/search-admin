@@ -14,4 +14,5 @@ type Storage interface{
 	UpdateUser(ctx context.Context, user *models.User) error
 	CreateFilter(ctx context.Context, filter *models.Filter) (*models.Filter, error)
 	GetAllFilters(ctx context.Context) ([]models.Filter, error)
+	DeleteFilter(ctx context.Context, id string) error
 }
