@@ -180,7 +180,8 @@ func (s *MongoStorage) UpdateUser(ctx context.Context, user *models.User) error 
 		{Key: "$set", Value: bson.D{
 			{Key: "login", Value: user.Login},
 			{Key: "password", Value: user.Password},
-			{Key: "index_limit", Value: user.IndexLimit},
+			{Key: "indexlimit", Value: user.IndexLimit},
+			{Key: "indexes", Value: user.Indexes},
 		}},
 	}
 

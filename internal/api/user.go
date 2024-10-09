@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/go-playground/validator/v10"
 	"github.com/xavesen/search-admin/internal/models"
 	"github.com/xavesen/search-admin/internal/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -58,23 +57,31 @@ func (s *Server) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	err := s.validator.Struct(newUser)
 	if err != nil {
-		logErrorString := "User input validation error:"
-		errorString := "Bad request:"
-		for i, err := range err.(validator.ValidationErrors) {
-			if i != 0 {
-				errorString = errorString + ","
-				logErrorString = logErrorString + ";"
-			}
-			errorString = errorString + " " + err.Translate(*s.translator)
-			logErrorString = logErrorString + " " + err.Error()
-		}
+		logErrorString, errorString := utils.FormatErrorString(err, s.translator)
 		log.WithFields(log.Fields{
 			"request_id": r.Context().Value(utils.ContextKeyReqId),
 			"method": r.Method,
 			"url_path": r.URL.Path,
 		}).Warning(logErrorString)
-		utils.WriteJSON(w, r, http.StatusBadRequest, false, errorString, nil)
+		utils.WriteJSON(w, r, http.StatusBadRequest, false, "Bad request: " + errorString, nil)
 		return
+	}
+	
+	if newUser.Indexes != nil {
+		for _, index := range newUser.Indexes {
+			err = s.validator.Struct(index)
+			if err != nil {
+				logErrorString, errorString := utils.FormatErrorString(err, s.translator)
+				log.WithFields(log.Fields{
+					"request_id": r.Context().Value(utils.ContextKeyReqId),
+					"method": r.Method,
+					"url_path": r.URL.Path,
+				}).Warning(logErrorString)
+				utils.WriteJSON(w, r, http.StatusBadRequest, false, "Bad request: in indexes " + errorString, nil)
+				return
+			}
+			
+		}
 	}
 
 	ctx := context.TODO()
@@ -127,23 +134,31 @@ func (s *Server) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	err := s.validator.Struct(updatedUser)
 	if err != nil {
-		logErrorString := "User input validation error:"
-		errorString := "Bad request:"
-		for i, err := range err.(validator.ValidationErrors) {
-			if i != 0 {
-				errorString = errorString + ","
-				logErrorString = logErrorString + ";"
-			}
-			errorString = errorString + " " + err.Translate(*s.translator)
-			logErrorString = logErrorString + " " + err.Error()
-		}
+		logErrorString, errorString := utils.FormatErrorString(err, s.translator)
 		log.WithFields(log.Fields{
 			"request_id": r.Context().Value(utils.ContextKeyReqId),
 			"method": r.Method,
 			"url_path": r.URL.Path,
 		}).Warning(logErrorString)
-		utils.WriteJSON(w, r, http.StatusBadRequest, false, errorString, nil)
+		utils.WriteJSON(w, r, http.StatusBadRequest, false, "Bad request: " + errorString, nil)
 		return
+	}
+
+	if updatedUser.Indexes != nil {
+		for _, index := range updatedUser.Indexes {
+			err = s.validator.Struct(index)
+			if err != nil {
+				logErrorString, errorString := utils.FormatErrorString(err, s.translator)
+				log.WithFields(log.Fields{
+					"request_id": r.Context().Value(utils.ContextKeyReqId),
+					"method": r.Method,
+					"url_path": r.URL.Path,
+				}).Warning(logErrorString)
+				utils.WriteJSON(w, r, http.StatusBadRequest, false, "Bad request: in indexes " + errorString, nil)
+				return
+			}
+			
+		}
 	}
 
 	updatedUser.Id = id

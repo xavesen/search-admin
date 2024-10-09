@@ -55,3 +55,17 @@ func newTranslator(validate *validator.Validate) *ut.Translator {
 
 	return &translator
 }
+
+func FormatErrorString(err error, translator *ut.Translator) (string, string) {
+	logErrorString := "User input validation error: "
+	errorString := ""
+	for i, err := range err.(validator.ValidationErrors) {
+		if i != 0 {
+			errorString = errorString + ", "
+			logErrorString = logErrorString + "; "
+		}
+		errorString = errorString + err.Translate(*translator)
+		logErrorString = logErrorString + err.Error()
+	}
+	return logErrorString, errorString
+}

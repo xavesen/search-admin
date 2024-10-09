@@ -3,10 +3,11 @@ package models
 import "encoding/json"
 
 type User struct {
-	Id         string `json:"id,omitempty" bson:"_id,omitempty" validate:"omitempty,mongodb"`
-	Login      string `json:"login" validate:"required"`
-	Password   string `json:"password" validate:"required"`
-	IndexLimit int    `json:"index_limit" bson:"indexlimit" validate:"required"`
+	Id         	string 	`json:"id,omitempty" bson:"_id,omitempty" validate:"omitempty,mongodb"`
+	Login      	string 	`json:"login" validate:"required"`
+	Password   	string 	`json:"password" validate:"required"`
+	IndexLimit 	int    	`json:"index_limit" bson:"indexlimit" validate:"required"`
+	Indexes		[]Index	`json:"indexes,omitempty" validate:"omitempty"`
 }
 
 func (user *User) String() string {

@@ -261,6 +261,48 @@ var createUserTests = []struct {
 		},
 	},
 	{
+		testName: "Returns 201 and user with id when payload is correct but no indexes listed",
+		storage: &storage.StorageMock{
+			Error: 	nil,
+		},
+		payload: &models.User{
+				Login: "mary",
+				Password: "12345",
+				IndexLimit: 5,
+				Indexes: []models.Index{
+					{
+						Name: "aaa",
+						Id: "aaa",
+					},
+					{
+						Name: "bbb",
+						Id: "bbb",
+					},
+				},
+		},
+		expectedCode: http.StatusCreated,
+		expectedResponse: utils.Response{
+			Success: true,
+			ErrorMessage: "",
+			Data: models.User{
+				Id:	"1",
+				Login: "mary",
+				Password: "12345",
+				IndexLimit: 5,
+				Indexes: []models.Index{
+					{
+						Name: "aaa",
+						Id: "aaa",
+					},
+					{
+						Name: "bbb",
+						Id: "bbb",
+					},
+				},
+			},
+		},
+	},
+	{
 		testName: "Returns 400 with empty payload",
 		storage: &storage.StorageMock{
 			Error: 	nil,
@@ -319,6 +361,98 @@ var createUserTests = []struct {
 		expectedResponse: utils.Response{
 			Success: false,
 			ErrorMessage: "Bad request: password is required",
+			Data: nil,
+		},
+	},
+	{
+		testName: "Returns 400 without id in index",
+		storage: &storage.StorageMock{
+			Error: 	nil,
+		},
+		payload:  &models.User{
+			Login: "mary",
+			Password: "aaa",
+			IndexLimit: 5,
+			Indexes: []models.Index{
+				{
+					Name: "aaa",
+				},
+			},
+		},
+		expectedCode: http.StatusBadRequest,
+		expectedResponse: utils.Response{
+			Success: false,
+			ErrorMessage: "Bad request: in indexes id is required",
+			Data: nil,
+		},
+	},
+	{
+		testName: "Returns 400 without name in index",
+		storage: &storage.StorageMock{
+			Error: 	nil,
+		},
+		payload:  &models.User{
+			Login: "mary",
+			Password: "aaa",
+			IndexLimit: 5,
+			Indexes: []models.Index{
+				{
+					Id: "aaa",
+				},
+			},
+		},
+		expectedCode: http.StatusBadRequest,
+		expectedResponse: utils.Response{
+			Success: false,
+			ErrorMessage: "Bad request: in indexes name is required",
+			Data: nil,
+		},
+	},
+	{
+		testName: "Returns 400 with empty index",
+		storage: &storage.StorageMock{
+			Error: 	nil,
+		},
+		payload:  &models.User{
+			Login: "mary",
+			Password: "aaa",
+			IndexLimit: 5,
+			Indexes: []models.Index{
+				{},
+			},
+		},
+		expectedCode: http.StatusBadRequest,
+		expectedResponse: utils.Response{
+			Success: false,
+			ErrorMessage: "Bad request: in indexes id is required, name is required",
+			Data: nil,
+		},
+	},
+	{
+		testName: "Returns 400 with one of indexes empty",
+		storage: &storage.StorageMock{
+			Error: 	nil,
+		},
+		payload:  &models.User{
+			Login: "mary",
+			Password: "aaa",
+			IndexLimit: 5,
+			Indexes: []models.Index{
+				{
+					Id: "aaa",
+					Name: "aaa",
+				},
+				{},
+				{
+					Id: "bbb",
+					Name: "bbb",
+				},
+			},
+		},
+		expectedCode: http.StatusBadRequest,
+		expectedResponse: utils.Response{
+			Success: false,
+			ErrorMessage: "Bad request: in indexes id is required, name is required",
 			Data: nil,
 		},
 	},
@@ -448,7 +582,7 @@ var updateUserTests = []struct {
 	expectedResponse	utils.Response
 }{
 	{
-		testName: "Returns 200",
+		testName: "Returns 200 without indexes in payload",
 		storage: &storage.StorageMock{
 			Error: 	nil,
 		},
@@ -467,6 +601,49 @@ var updateUserTests = []struct {
 				Login: "mary",
 				Password: "12345",
 				IndexLimit: 5,
+			},
+		},
+	},
+	{
+		testName: "Returns 200 when indexes are in payload",
+		storage: &storage.StorageMock{
+			Error: 	nil,
+		},
+		userId: "66d8420df6e5311a791e0a08",
+		payload: &models.User{
+			Login: "mary",
+			Password: "12345",
+			IndexLimit: 5,
+			Indexes: []models.Index{
+				{
+					Name: "aaa",
+					Id: "aaa",
+				},
+				{
+					Name: "bbb",
+					Id: "bbb",
+				},
+			},
+		},
+		expectedCode: http.StatusOK,
+		expectedResponse: utils.Response{
+			Success: true,
+			ErrorMessage: "",
+			Data: models.User{
+				Id:	"66d8420df6e5311a791e0a08",
+				Login: "mary",
+				Password: "12345",
+				IndexLimit: 5,
+				Indexes: []models.Index{
+					{
+						Name: "aaa",
+						Id: "aaa",
+					},
+					{
+						Name: "bbb",
+						Id: "bbb",
+					},
+				},
 			},
 		},
 	},
@@ -533,6 +710,102 @@ var updateUserTests = []struct {
 		expectedResponse: utils.Response{
 			Success: false,
 			ErrorMessage: "Bad request: password is required",
+			Data: nil,
+		},
+	},
+	{
+		testName: "Returns 400 without id in index",
+		storage: &storage.StorageMock{
+			Error: 	nil,
+		},
+		userId: "66d8420df6e5311a791e0a08",
+		payload:  &models.User{
+			Login: "mary",
+			Password: "aaa",
+			IndexLimit: 5,
+			Indexes: []models.Index{
+				{
+					Name: "aaa",
+				},
+			},
+		},
+		expectedCode: http.StatusBadRequest,
+		expectedResponse: utils.Response{
+			Success: false,
+			ErrorMessage: "Bad request: in indexes id is required",
+			Data: nil,
+		},
+	},
+	{
+		testName: "Returns 400 without name in index",
+		storage: &storage.StorageMock{
+			Error: 	nil,
+		},
+		userId: "66d8420df6e5311a791e0a08",
+		payload:  &models.User{
+			Login: "mary",
+			Password: "aaa",
+			IndexLimit: 5,
+			Indexes: []models.Index{
+				{
+					Id: "aaa",
+				},
+			},
+		},
+		expectedCode: http.StatusBadRequest,
+		expectedResponse: utils.Response{
+			Success: false,
+			ErrorMessage: "Bad request: in indexes name is required",
+			Data: nil,
+		},
+	},
+	{
+		testName: "Returns 400 with empty index",
+		storage: &storage.StorageMock{
+			Error: 	nil,
+		},
+		userId: "66d8420df6e5311a791e0a08",
+		payload:  &models.User{
+			Login: "mary",
+			Password: "aaa",
+			IndexLimit: 5,
+			Indexes: []models.Index{
+				{},
+			},
+		},
+		expectedCode: http.StatusBadRequest,
+		expectedResponse: utils.Response{
+			Success: false,
+			ErrorMessage: "Bad request: in indexes id is required, name is required",
+			Data: nil,
+		},
+	},
+	{
+		testName: "Returns 400 with one of indexes empty",
+		storage: &storage.StorageMock{
+			Error: 	nil,
+		},
+		userId: "66d8420df6e5311a791e0a08",
+		payload:  &models.User{
+			Login: "mary",
+			Password: "aaa",
+			IndexLimit: 5,
+			Indexes: []models.Index{
+				{
+					Id: "aaa",
+					Name: "aaa",
+				},
+				{},
+				{
+					Id: "bbb",
+					Name: "bbb",
+				},
+			},
+		},
+		expectedCode: http.StatusBadRequest,
+		expectedResponse: utils.Response{
+			Success: false,
+			ErrorMessage: "Bad request: in indexes id is required, name is required",
 			Data: nil,
 		},
 	},
