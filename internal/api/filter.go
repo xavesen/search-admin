@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/go-playground/validator/v10"
 	"github.com/xavesen/search-admin/internal/models"
 	"github.com/xavesen/search-admin/internal/utils"
 	log "github.com/sirupsen/logrus"
@@ -26,16 +25,7 @@ func (s *Server) CreateFilter(w http.ResponseWriter, r *http.Request) {
 
 	err := s.validator.Struct(newFilter)
 	if err != nil {
-		logErrorString := "User input validation error:"
-		errorString := "Bad request:"
-		for i, err := range err.(validator.ValidationErrors) {
-			if i != 0 {
-				errorString = errorString + ","
-				logErrorString = logErrorString + ";"
-			}
-			errorString = errorString + " " + err.Translate(*s.translator)
-			logErrorString = logErrorString + " " + err.Error()
-		}
+		logErrorString, errorString := utils.FormatErrorString(err, s.translator)
 		log.WithFields(log.Fields{
 			"request_id": r.Context().Value(utils.ContextKeyReqId),
 			"method": r.Method,
