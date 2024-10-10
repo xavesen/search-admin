@@ -66,23 +66,6 @@ func (s *Server) CreateUser(w http.ResponseWriter, r *http.Request) {
 		utils.WriteJSON(w, r, http.StatusBadRequest, false, "Bad request: " + errorString, nil)
 		return
 	}
-	
-	if newUser.Indexes != nil {
-		for _, index := range newUser.Indexes {
-			err = s.validator.Struct(index)
-			if err != nil {
-				logErrorString, errorString := utils.FormatErrorString(err, s.translator)
-				log.WithFields(log.Fields{
-					"request_id": r.Context().Value(utils.ContextKeyReqId),
-					"method": r.Method,
-					"url_path": r.URL.Path,
-				}).Warning(logErrorString)
-				utils.WriteJSON(w, r, http.StatusBadRequest, false, "Bad request: in indexes " + errorString, nil)
-				return
-			}
-			
-		}
-	}
 
 	ctx := context.TODO()
 	newUser, err = s.storage.CreateUser(ctx, newUser)
@@ -143,24 +126,7 @@ func (s *Server) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		utils.WriteJSON(w, r, http.StatusBadRequest, false, "Bad request: " + errorString, nil)
 		return
 	}
-
-	if updatedUser.Indexes != nil {
-		for _, index := range updatedUser.Indexes {
-			err = s.validator.Struct(index)
-			if err != nil {
-				logErrorString, errorString := utils.FormatErrorString(err, s.translator)
-				log.WithFields(log.Fields{
-					"request_id": r.Context().Value(utils.ContextKeyReqId),
-					"method": r.Method,
-					"url_path": r.URL.Path,
-				}).Warning(logErrorString)
-				utils.WriteJSON(w, r, http.StatusBadRequest, false, "Bad request: in indexes " + errorString, nil)
-				return
-			}
-			
-		}
-	}
-
+	
 	updatedUser.Id = id
 
 	ctx := context.TODO()
