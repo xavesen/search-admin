@@ -67,6 +67,10 @@ func (s *Server) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if newUser.Indexes == nil {
+		newUser.Indexes = []string{}
+	}
+
 	ctx := context.TODO()
 	newUser, err = s.storage.CreateUser(ctx, newUser)
 	if err != nil {
@@ -128,6 +132,9 @@ func (s *Server) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	updatedUser.Id = id
+	if updatedUser.Indexes == nil {
+		updatedUser.Indexes = []string{}
+	}
 
 	ctx := context.TODO()
 	err = s.storage.UpdateUser(ctx, updatedUser)
